@@ -15,6 +15,8 @@ Copy this file to `TEAM.md` in your team repository and complete it before start
 | Student 1 | @AlexAsh12 |
 | Student 2 | @Remi2Vini |
 | Student 3 | @Lookaatme |
+| Student 3 | @wh1t3r0s3-12 |
+
 
 Add a fourth row only if your team has four members.
 
