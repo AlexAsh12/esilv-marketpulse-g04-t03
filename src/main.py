@@ -2,6 +2,17 @@ from pathlib import Path
 import csv
 import json
 
+def normalize_price_row(row):
+    return {
+        "date": row["date"],
+        "ticker": row["ticker"],
+        "open": float(row["open"]),
+        "high": float(row["high"]),
+        "low": float(row["low"]),
+        "close": float(row["close"]),
+        "volume": int(row["volume"]),
+    }
+
 
 DATA_DIR = Path("data/sample")
 
