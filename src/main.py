@@ -38,14 +38,16 @@ def filter_prices(prices, ticker):
 
 
 def main():
+    
     instruments = load_instruments()
     prices = load_prices()
+    normalized_prices = [normalize_price_row(row) for row in prices]
 
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
-    instrument_prices = filter_prices(prices, instrument["ticker"])
-    benchmark_prices = filter_prices(prices, benchmark["ticker"])
+    instrument_prices = filter_prices(normalized_prices, instrument["ticker"])
+    benchmark_prices = filter_prices(normalized_prices, benchmark["ticker"])
 
     instrument_latest = instrument_prices[-1]
     benchmark_latest = benchmark_prices[-1]
