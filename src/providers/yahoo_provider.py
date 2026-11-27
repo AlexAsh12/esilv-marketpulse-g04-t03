@@ -1,4 +1,3 @@
-cat << 'EOF' > src/providers/yahoo_provider.py
 import yfinance as yf
 
 
@@ -31,4 +30,3 @@ def fetch_yahoo_prices(
         })
 
     return rows
-EOF

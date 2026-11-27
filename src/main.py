@@ -8,6 +8,29 @@ from analytics import (
     calculate_period_return,
     calculate_relative_performance,
 )
+from providers.yahoo_provider import fetch_yahoo_prices
+
+
+DATA_DIR = Path("data/sample")
+
+# These starter values mirror config/settings.yml.
+# settings.yml is a human-readable configuration contract in the CORE.
+# Parsing YAML is optional and is not required by the 18-hour lab sequence.
+LOOKBACK_LABEL = "1 month"
+INTERVAL_LABEL = "Daily"
+
+YAHOO_PERIOD = "1mo"
+YAHOO_INTERVAL = "1d"
+
+# Canonical MarketPulse ticker -> Yahoo Finance symbol
+YAHOO_SYMBOLS = {
+    "AAPL": "AAPL",
+    "SP500": "^GSPC",
+}
+
+# True  = remote Yahoo Finance data
+# False = local CSV fallback (e.g. during a temporary Yahoo outage)
+USE_YAHOO = True
 
 
 def normalize_price_row(row):
@@ -20,15 +43,6 @@ def normalize_price_row(row):
         "close": float(row["close"]),
         "volume": int(row["volume"]),
     }
-
-
-DATA_DIR = Path("data/sample")
-
-# These starter values mirror config/settings.yml.
-# settings.yml is a human-readable configuration contract in the CORE.
-# Parsing YAML is optional and is not required by the 18-hour lab sequence.
-LOOKBACK_LABEL = "1 month"
-INTERVAL_LABEL = "Daily"
 
 
 def load_instruments():
@@ -45,21 +59,41 @@ def filter_prices(prices, ticker):
     return [row for row in prices if row["ticker"] == ticker]
 
 
+def get_csv_prices(ticker):
+    normalized_prices = [normalize_price_row(row) for row in load_prices()]
+    return filter_prices(normalized_prices, ticker)
+
+
+def get_yahoo_prices(ticker):
+    return fetch_yahoo_prices(
+        symbol=YAHOO_SYMBOLS[ticker],
+        canonical_ticker=ticker,
+        period=YAHOO_PERIOD,
+        interval=YAHOO_INTERVAL,
+    )
+
+
 def main():
     instruments = load_instruments()
-    prices = load_prices()
-    normalized_prices = [normalize_price_row(row) for row in prices]
-
     instrument = instruments["instrument"]
     benchmark = instruments["benchmark"]
 
-    instrument_prices = filter_prices(normalized_prices, instrument["ticker"])
-    benchmark_prices = filter_prices(normalized_prices, benchmark["ticker"])
+    if USE_YAHOO:
+        provider_label = "Yahoo Finance via yfinance"
+        instrument_prices = get_yahoo_prices(instrument["ticker"])
+        benchmark_prices = get_yahoo_prices(benchmark["ticker"])
+    else:
+        provider_label = "Local CSV sample"
+        instrument_prices = get_csv_prices(instrument["ticker"])
+        benchmark_prices = get_csv_prices(benchmark["ticker"])
 
     aligned_instrument, aligned_benchmark = align_series(
         instrument_prices,
         benchmark_prices,
     )
+
+    if not aligned_instrument:
+        raise ValueError("No common dates between instrument and benchmark")
 
     instrument_return = calculate_period_return(aligned_instrument)
     benchmark_return = calculate_period_return(aligned_benchmark)
@@ -76,17 +110,22 @@ def main():
 
     print("=== MarketPulse ===")
     print()
+    print("Provider")
+    print(provider_label)
+    print()
     print("Market configuration")
-    print(f"Period   : {LOOKBACK_LABEL}")
-    print(f"Interval : {INTERVAL_LABEL}")
+    print(f"Instrument : {instrument['ticker']} - {instrument['name']}")
+    print(f"Benchmark  : {benchmark['ticker']} - {benchmark['name']}")
+    print(f"Period     : {LOOKBACK_LABEL}")
+    print(f"Interval   : {INTERVAL_LABEL}")
+    print(
+        f"Dates      : {aligned_instrument[0]['date']} -> "
+        f"{aligned_instrument[-1]['date']} "
+        f"({len(aligned_instrument)} common observations)"
+    )
     print()
-    print("Instrument")
-    print(f"{instrument['ticker']} - {instrument['name']}")
-    print(f"Period return : {instrument_return:.2f}%")
-    print()
-    print("Benchmark")
-    print(f"{benchmark['ticker']} - {benchmark['name']}")
-    print(f"Period return : {benchmark_return:.2f}%")
+    print(f"Instrument return : {instrument_return:.2f}%")
+    print(f"Benchmark return  : {benchmark_return:.2f}%")
     print()
     print("Relative performance")
     print(
