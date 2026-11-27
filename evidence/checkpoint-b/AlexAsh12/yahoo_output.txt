@@ -1,0 +1,21 @@
+=== MarketPulse ===
+
+Provider
+Yahoo Finance via yfinance
+
+Market configuration
+Instrument : AAPL - Apple Inc.
+Benchmark  : SP500 - S&P 500
+Period     : 1 month
+Interval   : Daily
+Dates      : 2026-10-28 -> 2026-11-27 (22 common observations)
+
+Instrument return : 4.28%
+Benchmark return  : -5.77%
+
+Relative performance
+AAPL vs SP500 : +10.04 percentage points
+
+Base 100
+AAPL  : 100.00 -> 104.28
+SP500 : 100.00 -> 94.23
